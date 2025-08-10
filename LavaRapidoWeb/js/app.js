@@ -574,6 +574,11 @@ class LavaRapidoApp {
         }
     }
     
+    // Variáveis globais para dados de relatórios
+    dadosRelatorioFaturamento = null;
+    dadosRelatorioServicos = null;
+    dadosRelatorioClientes = null;
+    
     // Relatórios
     gerarRelatorioFaturamento() {
         const dataInicio = document.getElementById('dataInicio').value;
@@ -593,15 +598,38 @@ class LavaRapidoApp {
             return dataVenda >= inicio && dataVenda <= fim && venda.status !== 'cancelado';
         });
         
-        const total = vendasPeriodo.reduce((sum, venda) => sum + venda.valor, 0);
+        // Armazenar dados para exportação
+        this.dadosRelatorioFaturamento = {
+            periodo: `${this.formatDate(inicio)} a ${this.formatDate(fim)}`,
+            vendas: vendasPeriodo.map(venda => {
+                const cliente = this.clientes.find(c => c.id === venda.clienteId);
+                const servico = this.servicos.find(s => s.id === venda.servicoId);
+                return {
+                    data: this.formatDateTime(new Date(venda.data)),
+                    cliente: cliente?.nome || 'Cliente removido',
+                    servico: servico?.nome || 'Serviço removido',
+                    valor: venda.valor
+                };
+            }),
+            resumo: {
+                totalVendas: vendasPeriodo.length,
+                faturamentoTotal: vendasPeriodo.reduce((sum, venda) => sum + venda.valor, 0),
+                ticketMedio: vendasPeriodo.length ? vendasPeriodo.reduce((sum, venda) => sum + venda.valor, 0) / vendasPeriodo.length : 0
+            }
+        };
+        
+        const total = this.dadosRelatorioFaturamento.resumo.faturamentoTotal;
         const container = document.getElementById('relatorioFaturamento');
         
         container.innerHTML = `
-            <h4>Período: ${this.formatDate(inicio)} a ${this.formatDate(fim)}</h4>
-            <p><strong>Total de Vendas:</strong> ${vendasPeriodo.length}</p>
-            <p><strong>Faturamento Total:</strong> ${this.formatCurrency(total)}</p>
-            <p><strong>Ticket Médio:</strong> ${this.formatCurrency(vendasPeriodo.length ? total / vendasPeriodo.length : 0)}</p>
+            <h4>Período: ${this.dadosRelatorioFaturamento.periodo}</h4>
+            <p><strong>Total de Vendas:</strong> ${this.dadosRelatorioFaturamento.resumo.totalVendas}</p>
+            <p><strong>Faturamento Total:</strong> ${this.formatCurrency(this.dadosRelatorioFaturamento.resumo.faturamentoTotal)}</p>
+            <p><strong>Ticket Médio:</strong> ${this.formatCurrency(this.dadosRelatorioFaturamento.resumo.ticketMedio)}</p>
         `;
+        
+        // Mostrar botões de exportação
+        document.getElementById('exportFaturamento').style.display = 'flex';
     }
     
     gerarRelatorioServicos() {
@@ -650,6 +678,9 @@ class LavaRapidoApp {
                 </tbody>
             </table>
         `;
+        
+        // Mostrar botões de exportação
+        document.getElementById('exportServicos').style.display = 'flex';
     }
     
     gerarRelatorioClientes() {
@@ -699,6 +730,9 @@ class LavaRapidoApp {
                 </tbody>
             </table>
         `;
+        
+        // Mostrar botões de exportação
+        document.getElementById('exportClientes').style.display = 'flex';
     }
     
     // Helpers
@@ -807,6 +841,262 @@ function gerarRelatorioClientes() {
 document.addEventListener('DOMContentLoaded', function() {
     app = new LavaRapidoApp();
 });
+
+// Export Functions - Excel
+function exportarFaturamentoExcel() {
+    if (!app.dadosRelatorioFaturamento) {
+        alert('Gere o relatório primeiro!');
+        return;
+    }
+    
+    const dados = app.dadosRelatorioFaturamento;
+    const ws = XLSX.utils.json_to_sheet(dados.vendas, {
+        header: ['data', 'cliente', 'servico', 'valor']
+    });
+    
+    // Adicionar cabeçalhos personalizados
+    XLSX.utils.sheet_add_aoa(ws, [['Data', 'Cliente', 'Serviço', 'Valor']], {origin: 'A1'});
+    
+    // Adicionar resumo no final
+    const ultimaLinha = dados.vendas.length + 3;
+    XLSX.utils.sheet_add_aoa(ws, [
+        ['RESUMO'],
+        [`Período: ${dados.periodo}`],
+        [`Total de Vendas: ${dados.resumo.totalVendas}`],
+        [`Faturamento Total: ${app.formatCurrency(dados.resumo.faturamentoTotal)}`],
+        [`Ticket Médio: ${app.formatCurrency(dados.resumo.ticketMedio)}`]
+    ], {origin: `A${ultimaLinha}`});
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Faturamento');
+    XLSX.writeFile(wb, `Relatorio_Faturamento_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+function exportarServicosExcel() {
+    const servicosCount = {};
+    app.vendas.forEach(venda => {
+        if (venda.status !== 'cancelado') {
+            const servico = app.servicos.find(s => s.id === venda.servicoId);
+            if (servico) {
+                if (!servicosCount[servico.nome]) {
+                    servicosCount[servico.nome] = { count: 0, valor: 0 };
+                }
+                servicosCount[servico.nome].count++;
+                servicosCount[servico.nome].valor += venda.valor;
+            }
+        }
+    });
+    
+    const dados = Object.entries(servicosCount)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .map(([nome, dados]) => ({
+            servico: nome,
+            quantidade: dados.count,
+            faturamento: dados.valor
+        }));
+    
+    const ws = XLSX.utils.json_to_sheet(dados);
+    XLSX.utils.sheet_add_aoa(ws, [['Serviço', 'Quantidade', 'Faturamento']], {origin: 'A1'});
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Serviços');
+    XLSX.writeFile(wb, `Relatorio_Servicos_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+function exportarClientesExcel() {
+    const clientesCount = {};
+    app.vendas.forEach(venda => {
+        if (venda.status !== 'cancelado') {
+            const cliente = app.clientes.find(c => c.id === venda.clienteId);
+            if (cliente) {
+                if (!clientesCount[cliente.nome]) {
+                    clientesCount[cliente.nome] = { count: 0, valor: 0, telefone: cliente.telefone, email: cliente.email };
+                }
+                clientesCount[cliente.nome].count++;
+                clientesCount[cliente.nome].valor += venda.valor;
+            }
+        }
+    });
+    
+    const dados = Object.entries(clientesCount)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 10)
+        .map(([nome, dados]) => ({
+            cliente: nome,
+            telefone: dados.telefone || '-',
+            email: dados.email || '-',
+            visitas: dados.count,
+            totalGasto: dados.valor
+        }));
+    
+    const ws = XLSX.utils.json_to_sheet(dados);
+    XLSX.utils.sheet_add_aoa(ws, [['Cliente', 'Telefone', 'Email', 'Visitas', 'Total Gasto']], {origin: 'A1'});
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+    XLSX.writeFile(wb, `Relatorio_Clientes_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// Export Functions - PDF
+function exportarFaturamentoPDF() {
+    if (!app.dadosRelatorioFaturamento) {
+        alert('Gere o relatório primeiro!');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Cabeçalho
+    doc.setFontSize(20);
+    doc.text('LavaRápido - Sistema de Gestão', 105, 20, null, null, 'center');
+    doc.setFontSize(16);
+    doc.text('Relatório de Faturamento', 105, 35, null, null, 'center');
+    
+    const dados = app.dadosRelatorioFaturamento;
+    doc.setFontSize(12);
+    doc.text(`Período: ${dados.periodo}`, 20, 55);
+    
+    // Resumo
+    doc.text(`Total de Vendas: ${dados.resumo.totalVendas}`, 20, 70);
+    doc.text(`Faturamento Total: ${app.formatCurrency(dados.resumo.faturamentoTotal)}`, 20, 80);
+    doc.text(`Ticket Médio: ${app.formatCurrency(dados.resumo.ticketMedio)}`, 20, 90);
+    
+    // Tabela de vendas
+    if (dados.vendas.length > 0) {
+        const colunas = ['Data', 'Cliente', 'Serviço', 'Valor'];
+        const linhas = dados.vendas.map(venda => [
+            venda.data,
+            venda.cliente,
+            venda.servico,
+            app.formatCurrency(venda.valor)
+        ]);
+        
+        doc.autoTable({
+            startY: 100,
+            head: [colunas],
+            body: linhas,
+            theme: 'grid',
+            headStyles: { fillColor: [102, 126, 234] }
+        });
+    }
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text('Desenvolvido por João Lucas - Like Look Solutions', 105, 285, null, null, 'center');
+        doc.text(`Página ${i} de ${pageCount}`, 195, 285, null, null, 'right');
+    }
+    
+    doc.save(`Relatorio_Faturamento_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+function exportarServicosPDF() {
+    const servicosCount = {};
+    app.vendas.forEach(venda => {
+        if (venda.status !== 'cancelado') {
+            const servico = app.servicos.find(s => s.id === venda.servicoId);
+            if (servico) {
+                if (!servicosCount[servico.nome]) {
+                    servicosCount[servico.nome] = { count: 0, valor: 0 };
+                }
+                servicosCount[servico.nome].count++;
+                servicosCount[servico.nome].valor += venda.valor;
+            }
+        }
+    });
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Cabeçalho
+    doc.setFontSize(20);
+    doc.text('LavaRápido - Sistema de Gestão', 105, 20, null, null, 'center');
+    doc.setFontSize(16);
+    doc.text('Serviços Mais Solicitados', 105, 35, null, null, 'center');
+    
+    // Tabela
+    const servicosOrdenados = Object.entries(servicosCount)
+        .sort(([,a], [,b]) => b.count - a.count);
+    
+    if (servicosOrdenados.length > 0) {
+        const colunas = ['Serviço', 'Quantidade', 'Faturamento'];
+        const linhas = servicosOrdenados.map(([nome, dados]) => [
+            nome,
+            dados.count.toString(),
+            app.formatCurrency(dados.valor)
+        ]);
+        
+        doc.autoTable({
+            startY: 50,
+            head: [colunas],
+            body: linhas,
+            theme: 'grid',
+            headStyles: { fillColor: [102, 126, 234] }
+        });
+    }
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.text('Desenvolvido por João Lucas - Like Look Solutions', 105, 285, null, null, 'center');
+    
+    doc.save(`Relatorio_Servicos_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+function exportarClientesPDF() {
+    const clientesCount = {};
+    app.vendas.forEach(venda => {
+        if (venda.status !== 'cancelado') {
+            const cliente = app.clientes.find(c => c.id === venda.clienteId);
+            if (cliente) {
+                if (!clientesCount[cliente.nome]) {
+                    clientesCount[cliente.nome] = { count: 0, valor: 0 };
+                }
+                clientesCount[cliente.nome].count++;
+                clientesCount[cliente.nome].valor += venda.valor;
+            }
+        }
+    });
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Cabeçalho
+    doc.setFontSize(20);
+    doc.text('LavaRápido - Sistema de Gestão', 105, 20, null, null, 'center');
+    doc.setFontSize(16);
+    doc.text('Clientes Frequentes', 105, 35, null, null, 'center');
+    
+    // Tabela
+    const clientesOrdenados = Object.entries(clientesCount)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 10);
+    
+    if (clientesOrdenados.length > 0) {
+        const colunas = ['Cliente', 'Visitas', 'Total Gasto'];
+        const linhas = clientesOrdenados.map(([nome, dados]) => [
+            nome,
+            dados.count.toString(),
+            app.formatCurrency(dados.valor)
+        ]);
+        
+        doc.autoTable({
+            startY: 50,
+            head: [colunas],
+            body: linhas,
+            theme: 'grid',
+            headStyles: { fillColor: [102, 126, 234] }
+        });
+    }
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.text('Desenvolvido por João Lucas - Like Look Solutions', 105, 285, null, null, 'center');
+    
+    doc.save(`Relatorio_Clientes_${new Date().toISOString().split('T')[0]}.pdf`);
+}
 
 // Fechar modal quando clicar fora dele
 window.addEventListener('click', function(event) {
