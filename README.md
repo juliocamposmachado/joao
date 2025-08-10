@@ -163,3 +163,8 @@ Para dúvidas ou problemas:
 ---
 
 🚗💨 **Desenvolvido para simplificar o dia a dia de lava-rápidos!**
+
+<img width="540" height="1110" alt="image" src="https://github.com/user-attachments/assets/a7deea9d-862b-45b1-86b7-8278fe2fe682" />
+<img width="540" height="1110" alt="image" src="https://github.com/user-attachments/assets/f483debd-ca95-408b-8e07-431eb3f119ed" />
+
+
