@@ -1,3 +1,62 @@
+// Splash Screen Functions
+function hideSplashScreen() {
+    const splashScreen = document.getElementById('splashScreen');
+    const mainApp = document.getElementById('mainApp');
+    
+    splashScreen.classList.add('fade-out');
+    
+    setTimeout(() => {
+        splashScreen.style.display = 'none';
+        mainApp.style.display = 'block';
+        // Inicializar a aplicação principal
+        if (typeof app === 'undefined') {
+            window.app = new LavaRapidoApp();
+        }
+    }, 800);
+}
+
+// Social Share Functions
+function shareOnWhatsApp() {
+    const text = encodeURIComponent(
+        '🚗 LavaRápido - Sistema de Gestão para Lava-Jato\n\n' +
+        'Desenvolvido por João Lucas\n' +
+        '📞 +55 44 8833-2218\n\n' +
+        '🏢 Like Look Solutions\n' +
+        '📱 +55 11 99294-6628\n' +
+        '🌐 https://likelook.wixsite.com/solutions\n\n' +
+        'Sistema completo para gestão do seu lava-jato!'
+    );
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+
+function shareOnFacebook() {
+    const url = encodeURIComponent('https://likelook.wixsite.com/solutions');
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+function shareOnTwitter() {
+    const text = encodeURIComponent(
+        '🚗 LavaRápido - Sistema de Gestão para Lava-Jato\n' +
+        'Desenvolvido por João Lucas - Like Look Solutions\n' +
+        '#LavaJato #SistemaGestao #TI'
+    );
+    const url = encodeURIComponent('https://likelook.wixsite.com/solutions');
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+}
+
+function shareOnLinkedIn() {
+    const url = encodeURIComponent('https://likelook.wixsite.com/solutions');
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+}
+
+// Auto-hide splash screen after 5 seconds
+setTimeout(() => {
+    const splashScreen = document.getElementById('splashScreen');
+    if (splashScreen && !splashScreen.classList.contains('fade-out')) {
+        hideSplashScreen();
+    }
+}, 5000);
+
 // Aplicação LavaRápido - Gestão de Lava-Jato
 class LavaRapidoApp {
     constructor() {
