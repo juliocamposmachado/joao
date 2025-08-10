@@ -1,0 +1,87 @@
+# Arquivos compilados Android
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Arquivos de build do Gradle
+.gradle/
+build/
+*/build/
+
+# Arquivos do Android Studio
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Arquivo de propriedades locais
+local.properties
+
+# Arquivos de log
+*.log
+
+# Arquivos de backup
+*.bak
+*~
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# APKs e JARs (exceto Demo)
+*.apk
+*.jar
+!LavaRapidoDemo.jar
+!LavaRapidoApp-DEMO.apk
+
+# Keystore files (para releases)
+*.jks
+*.keystore
+
+# External native build folder generated in Android Studio 2.2 and later
+.externalNativeBuild
+.cxx/
+
+# NDK
+obj/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+/out/
+
+# User-specific configurations
+.idea/libraries/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/.name
+.idea/compiler.xml
+.idea/copyright/profiles_settings.xml
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/scopes/scope_settings.xml
+.idea/vcs.xml
+*.iml
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
