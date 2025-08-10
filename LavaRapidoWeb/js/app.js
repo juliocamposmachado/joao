@@ -63,6 +63,9 @@ class LavaRapidoApp {
         this.clientes = this.loadFromStorage('clientes') || [];
         this.servicos = this.loadFromStorage('servicos') || this.getDefaultServicos();
         this.vendas = this.loadFromStorage('vendas') || [];
+        this.movimentacoes = this.loadFromStorage('movimentacoes') || [];
+        this.fechamentoCaixa = this.loadFromStorage('fechamentoCaixa') || [];
+        this.statusCaixa = this.loadFromStorage('statusCaixa') || { aberto: true, data: new Date().toISOString() };
         this.currentEditId = null;
         this.currentEditType = null;
         
@@ -1270,4 +1273,438 @@ window.addEventListener('click', function(event) {
     if (event.target.classList.contains('modal')) {
         event.target.classList.remove('show');
     }
+});
+
+// ===== FUNCIONALIDADES DO FECHAMENTO DE CAIXA =====
+
+// Inicializar dados do caixa quando carregar a aba
+function initializeCaixa() {
+    updateStatusCaixa();
+    updateResumoDia();
+    renderMovimentacoes();
+    updateFormasPagamento();
+    calculateTotalCaixa();
+    renderHistoricoCaixa();
+}
+
+// Atualizar status do caixa
+function updateStatusCaixa() {
+    const statusBadge = document.getElementById('statusBadge');
+    const dataAtual = document.getElementById('dataAtual');
+    const btnConferir = document.getElementById('btnConferir');
+    const btnFechar = document.getElementById('btnFechar');
+    
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    dataAtual.textContent = hoje;
+    
+    if (app.statusCaixa.aberto) {
+        statusBadge.textContent = 'Caixa Aberto';
+        statusBadge.className = 'caixa-badge aberto';
+        btnConferir.disabled = false;
+        btnFechar.disabled = false;
+    } else {
+        statusBadge.textContent = 'Caixa Fechado';
+        statusBadge.className = 'caixa-badge fechado';
+        btnConferir.disabled = true;
+        btnFechar.disabled = true;
+    }
+}
+
+// Atualizar resumo do dia
+function updateResumoDia() {
+    const hoje = new Date().toDateString();
+    
+    // Vendas de hoje
+    const vendasHoje = app.vendas.filter(venda => 
+        new Date(venda.data).toDateString() === hoje && 
+        venda.status !== 'cancelado'
+    );
+    
+    const totalVendas = vendasHoje.length;
+    const faturamentoBruto = vendasHoje.reduce((total, venda) => total + venda.valor, 0);
+    const ticketMedio = totalVendas > 0 ? faturamentoBruto / totalVendas : 0;
+    
+    document.getElementById('totalVendasDia').textContent = totalVendas;
+    document.getElementById('faturamentoBruto').textContent = app.formatCurrency(faturamentoBruto);
+    document.getElementById('ticketMedio').textContent = app.formatCurrency(ticketMedio);
+}
+
+// Renderizar movimentações do dia
+function renderMovimentacoes() {
+    const container = document.getElementById('movimentacoesContainer');
+    const hoje = new Date().toDateString();
+    
+    // Filtrar movimentações de hoje
+    const movimentacoesHoje = app.movimentacoes.filter(mov => 
+        new Date(mov.data).toDateString() === hoje
+    );
+    
+    if (movimentacoesHoje.length === 0) {
+        container.innerHTML = '\n            <div class="no-data">Nenhuma movimentação registrada hoje</div>\n        ';
+        return;
+    }
+    
+    container.innerHTML = movimentacoesHoje.map(mov => `
+        <div class="movimentacao-item">
+            <div class="movimentacao-info">
+                <span class="movimentacao-tipo ${mov.tipo}">
+                    <i class="fas ${mov.tipo === 'entrada' ? 'fa-plus' : 'fa-minus'}"></i>
+                    ${mov.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                </span>
+                <span class="movimentacao-descricao">${mov.descricao}</span>
+            </div>
+            <div class="movimentacao-valor ${mov.tipo}">
+                ${mov.tipo === 'entrada' ? '+' : '-'} ${app.formatCurrency(mov.valor)}
+            </div>
+            <button class="btn btn-small btn-danger" onclick="deleteMovimentacao(${mov.id})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Atualizar formas de pagamento
+function updateFormasPagamento() {
+    const hoje = new Date().toDateString();
+    
+    // Vendas de hoje agrupadas por forma de pagamento
+    const vendasHoje = app.vendas.filter(venda => 
+        new Date(venda.data).toDateString() === hoje && 
+        venda.status !== 'cancelado'
+    );
+    
+    let dinheiro = 0, cartao = 0, pix = 0;
+    
+    vendasHoje.forEach(venda => {
+        // Por simplicidade, vamos dividir igualmente entre as formas de pagamento
+        // Em uma implementação real, isso seria definido na venda
+        if (venda.formaPagamento) {
+            switch(venda.formaPagamento) {
+                case 'dinheiro': dinheiro += venda.valor; break;
+                case 'cartao': cartao += venda.valor; break;
+                case 'pix': pix += venda.valor; break;
+            }
+        } else {
+            // Distribuição automática se não especificado
+            const valorDividido = venda.valor / 3;
+            dinheiro += valorDividido;
+            cartao += valorDividido;
+            pix += valorDividido;
+        }
+    });
+    
+    document.getElementById('dinheiro').textContent = app.formatCurrency(dinheiro);
+    document.getElementById('cartao').textContent = app.formatCurrency(cartao);
+    document.getElementById('pix').textContent = app.formatCurrency(pix);
+}
+
+// Calcular total do caixa
+function calculateTotalCaixa() {
+    const hoje = new Date().toDateString();
+    
+    // Vendas de hoje
+    const vendasHoje = app.vendas.filter(venda => 
+        new Date(venda.data).toDateString() === hoje && 
+        venda.status !== 'cancelado'
+    );
+    
+    const faturamentoBruto = vendasHoje.reduce((total, venda) => total + venda.valor, 0);
+    
+    // Movimentações de hoje
+    const movimentacoesHoje = app.movimentacoes.filter(mov => 
+        new Date(mov.data).toDateString() === hoje
+    );
+    
+    const totalMovimentacoes = movimentacoesHoje.reduce((total, mov) => {
+        return total + (mov.tipo === 'entrada' ? mov.valor : -mov.valor);
+    }, 0);
+    
+    const totalCaixa = faturamentoBruto + totalMovimentacoes;
+    
+    document.getElementById('valorTotalCaixa').textContent = app.formatCurrency(totalCaixa);
+    
+    return totalCaixa;
+}
+
+// Adicionar nova movimentação
+function adicionarMovimentacao() {
+    document.getElementById('movimentacaoModal').classList.add('show');
+    document.getElementById('movimentacaoForm').reset();
+}
+
+// Salvar movimentação
+function saveMovimentacao() {
+    const tipo = document.getElementById('movimentacaoTipo').value;
+    const valor = parseFloat(document.getElementById('movimentacaoValor').value);
+    const descricao = document.getElementById('movimentacaoDescricao').value;
+    
+    if (!tipo || !valor || !descricao) {
+        alert('Todos os campos são obrigatórios!');
+        return;
+    }
+    
+    const movimentacao = {
+        id: Date.now(),
+        tipo,
+        valor,
+        descricao,
+        data: new Date().toISOString(),
+        usuario: 'Sistema'
+    };
+    
+    app.movimentacoes.push(movimentacao);
+    app.saveToStorage('movimentacoes', app.movimentacoes);
+    
+    renderMovimentacoes();
+    calculateTotalCaixa();
+    updateFormasPagamento();
+    
+    app.closeModal('movimentacaoModal');
+    app.showMessage('Movimentação registrada com sucesso!', 'success');
+}
+
+// Excluir movimentação
+function deleteMovimentacao(id) {
+    if (confirm('Tem certeza que deseja excluir esta movimentação?')) {
+        app.movimentacoes = app.movimentacoes.filter(mov => mov.id !== id);
+        app.saveToStorage('movimentacoes', app.movimentacoes);
+        
+        renderMovimentacoes();
+        calculateTotalCaixa();
+        updateFormasPagamento();
+        
+        app.showMessage('Movimentação excluída com sucesso!', 'success');
+    }
+}
+
+// Conferir caixa
+function conferirCaixa() {
+    const totalSistema = calculateTotalCaixa();
+    
+    document.getElementById('valorSistemaConferencia').textContent = app.formatCurrency(totalSistema);
+    document.getElementById('valorFisico').value = '';
+    document.getElementById('diferencaContainer').style.display = 'none';
+    document.getElementById('btnConfirmarConferencia').style.display = 'none';
+    
+    document.getElementById('conferenciaModal').classList.add('show');
+}
+
+// Calcular diferença na conferência
+function calcularDiferenca() {
+    const valorSistema = calculateTotalCaixa();
+    const valorFisico = parseFloat(document.getElementById('valorFisico').value);
+    
+    if (isNaN(valorFisico)) {
+        alert('Digite um valor válido!');
+        return;
+    }
+    
+    const diferenca = valorFisico - valorSistema;
+    const diferencaContainer = document.getElementById('diferencaContainer');
+    const diferencaValor = document.getElementById('diferencaValor');
+    const btnConfirmar = document.getElementById('btnConfirmarConferencia');
+    
+    diferencaValor.textContent = app.formatCurrency(Math.abs(diferenca));
+    diferencaValor.className = `diferenca-valor ${diferenca === 0 ? 'zero' : diferenca > 0 ? 'positiva' : 'negativa'}`;
+    
+    if (diferenca > 0) {
+        diferencaValor.textContent = `+ ${app.formatCurrency(diferenca)} (sobra)`;
+    } else if (diferenca < 0) {
+        diferencaValor.textContent = `- ${app.formatCurrency(Math.abs(diferenca))} (falta)`;
+    } else {
+        diferencaValor.textContent = 'Caixa conferido - sem diferença';
+    }
+    
+    diferencaContainer.style.display = 'block';
+    btnConfirmar.style.display = 'inline-block';
+}
+
+// Confirmar conferência
+function confirmarConferencia() {
+    const valorSistema = calculateTotalCaixa();
+    const valorFisico = parseFloat(document.getElementById('valorFisico').value);
+    const observacoes = document.getElementById('observacoesDiferenca').value;
+    const diferenca = valorFisico - valorSistema;
+    
+    const conferencia = {
+        id: Date.now(),
+        data: new Date().toISOString(),
+        valorSistema,
+        valorFisico,
+        diferenca,
+        observacoes: observacoes || 'Sem observações',
+        usuario: 'Sistema'
+    };
+    
+    // Salvar conferência no histórico
+    if (!app.conferencias) app.conferencias = [];
+    app.conferencias.push(conferencia);
+    app.saveToStorage('conferencias', app.conferencias);
+    
+    app.closeModal('conferenciaModal');
+    app.showMessage('Conferência realizada com sucesso!', 'success');
+    
+    renderHistoricoCaixa();
+}
+
+// Fechar caixa
+function fecharCaixa() {
+    if (!confirm('Tem certeza que deseja fechar o caixa?\nEsta ação não pode ser desfeita.')) {
+        return;
+    }
+    
+    const hoje = new Date();
+    const totalCaixa = calculateTotalCaixa();
+    
+    // Calcular dados do fechamento
+    const vendasHoje = app.vendas.filter(venda => 
+        new Date(venda.data).toDateString() === hoje.toDateString() && 
+        venda.status !== 'cancelado'
+    );
+    
+    const faturamentoBruto = vendasHoje.reduce((total, venda) => total + venda.valor, 0);
+    
+    // Calcular formas de pagamento
+    let dinheiro = 0, cartao = 0, pix = 0;
+    vendasHoje.forEach(venda => {
+        if (venda.formaPagamento) {
+            switch(venda.formaPagamento) {
+                case 'dinheiro': dinheiro += venda.valor; break;
+                case 'cartao': cartao += venda.valor; break;
+                case 'pix': pix += venda.valor; break;
+            }
+        } else {
+            const valorDividido = venda.valor / 3;
+            dinheiro += valorDividido;
+            cartao += valorDividido;
+            pix += valorDividido;
+        }
+    });
+    
+    const fechamento = {
+        id: Date.now(),
+        data: hoje.toISOString(),
+        dataFormatada: hoje.toLocaleDateString('pt-BR'),
+        totalVendas: vendasHoje.length,
+        faturamento: faturamentoBruto,
+        dinheiro: dinheiro,
+        cartao: cartao,
+        pix: pix,
+        totalCaixa: totalCaixa,
+        status: 'fechado',
+        usuario: 'Sistema'
+    };
+    
+    app.fechamentoCaixa.push(fechamento);
+    app.saveToStorage('fechamentoCaixa', app.fechamentoCaixa);
+    
+    // Atualizar status do caixa
+    app.statusCaixa = { aberto: false, data: hoje.toISOString() };
+    app.saveToStorage('statusCaixa', app.statusCaixa);
+    
+    updateStatusCaixa();
+    renderHistoricoCaixa();
+    
+    app.showMessage('Caixa fechado com sucesso!', 'success');
+}
+
+// Renderizar histórico de fechamentos
+function renderHistoricoCaixa() {
+    const tbody = document.getElementById('historicoTableBody');
+    
+    if (!app.fechamentoCaixa || app.fechamentoCaixa.length === 0) {
+        tbody.innerHTML = '<tr class="no-data"><td colspan="8">Nenhum fechamento realizado</td></tr>';
+        return;
+    }
+    
+    const fechamentosOrdenados = app.fechamentoCaixa
+        .sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    tbody.innerHTML = fechamentosOrdenados.map(fechamento => `
+        <tr>
+            <td>${fechamento.dataFormatada}</td>
+            <td>${fechamento.totalVendas}</td>
+            <td>${app.formatCurrency(fechamento.faturamento)}</td>
+            <td>${app.formatCurrency(fechamento.dinheiro)}</td>
+            <td>${app.formatCurrency(fechamento.cartao)}</td>
+            <td>${app.formatCurrency(fechamento.pix)}</td>
+            <td><span class="status-badge status-${fechamento.status}">${fechamento.status}</span></td>
+            <td>
+                <button class="btn btn-small btn-info" onclick="verDetalhesFechamento(${fechamento.id})">
+                    <i class="fas fa-eye"></i> Ver
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Ver detalhes do fechamento
+function verDetalhesFechamento(id) {
+    const fechamento = app.fechamentoCaixa.find(f => f.id === id);
+    if (!fechamento) return;
+    
+    alert(`Detalhes do Fechamento - ${fechamento.dataFormatada}\n\n` +
+          `Total de Vendas: ${fechamento.totalVendas}\n` +
+          `Faturamento: ${app.formatCurrency(fechamento.faturamento)}\n` +
+          `Dinheiro: ${app.formatCurrency(fechamento.dinheiro)}\n` +
+          `Cartão: ${app.formatCurrency(fechamento.cartao)}\n` +
+          `PIX: ${app.formatCurrency(fechamento.pix)}\n` +
+          `Total em Caixa: ${app.formatCurrency(fechamento.totalCaixa)}\n` +
+          `Status: ${fechamento.status}`);
+}
+
+// Exportar histórico do caixa
+function exportarHistoricoCaixa() {
+    if (!app.fechamentoCaixa || app.fechamentoCaixa.length === 0) {
+        alert('Não há dados para exportar!');
+        return;
+    }
+    
+    const dados = app.fechamentoCaixa.map(fechamento => ({
+        data: fechamento.dataFormatada,
+        vendas: fechamento.totalVendas,
+        faturamento: fechamento.faturamento,
+        dinheiro: fechamento.dinheiro,
+        cartao: fechamento.cartao,
+        pix: fechamento.pix,
+        totalCaixa: fechamento.totalCaixa,
+        status: fechamento.status
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(dados);
+    XLSX.utils.sheet_add_aoa(ws, [['Data', 'Vendas', 'Faturamento', 'Dinheiro', 'Cartão', 'PIX', 'Total Caixa', 'Status']], {origin: 'A1'});
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Histórico Caixa');
+    XLSX.writeFile(wb, `Historico_Caixa_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// Abrir novo caixa (função administrativa)
+function abrirNovoCaixa() {
+    if (confirm('Deseja abrir um novo caixa?')) {
+        app.statusCaixa = { aberto: true, data: new Date().toISOString() };
+        app.saveToStorage('statusCaixa', app.statusCaixa);
+        updateStatusCaixa();
+        app.showMessage('Novo caixa aberto!', 'success');
+    }
+}
+
+// Event listeners para formulários do caixa
+document.addEventListener('DOMContentLoaded', function() {
+    // Formulário de movimentação
+    if (document.getElementById('movimentacaoForm')) {
+        document.getElementById('movimentacaoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveMovimentacao();
+        });
+    }
+    
+    // Inicializar caixa quando mostrar a aba
+    const originalShowTab = showTab;
+    window.showTab = function(tabName) {
+        originalShowTab.call(this, tabName);
+        if (tabName === 'caixa') {
+            setTimeout(initializeCaixa, 100); // Pequeno delay para garantir que a aba foi carregada
+        }
+    };
 });
