@@ -138,6 +138,9 @@
             <button class="tab-btn" onclick="showTab('relatorios')">
                 <i class="fas fa-file-alt"></i> Relatórios
             </button>
+            <button class="tab-btn" onclick="showTab('chat')">
+                <i class="fas fa-robot"></i> Chat IA
+            </button>
         </nav>
 
         <!-- Dashboard Tab -->
@@ -332,6 +335,80 @@
                         </button>
                     </div>
                     <div id="relatorioClientes" class="report-result"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat IA Tab -->
+        <div id="chat" class="tab-content">
+            <div class="section-header">
+                <h2><i class="fas fa-robot"></i> Assistente Virtual - LavaRápido</h2>
+                <div class="chat-info">
+                    <span class="chat-badge">Especialista em Lava Rápido</span>
+                    <span class="chat-badge online">Online</span>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot-message">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                Olá! 👋 Eu sou seu assistente virtual especializado em lava rápido! 
+                                <br><br>
+                                Posso ajudar você com:
+                                <ul>
+                                    <li>💰 <strong>Análises de caixa e faturamento</strong></li>
+                                    <li>📊 <strong>Interpretação de relatórios</strong></li>
+                                    <li>📈 <strong>Estratégias de vendas</strong></li>
+                                    <li>🚗 <strong>Dicas para melhorar o serviço</strong></li>
+                                    <li>👥 <strong>Gestão de clientes</strong></li>
+                                    <li>⚙️ <strong>Otimização de processos</strong></li>
+                                </ul>
+                                <br>
+                                Como posso ajudar você hoje?
+                            </div>
+                            <div class="message-time">Agora</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="quick-questions">
+                        <button class="quick-btn" onclick="sendQuickMessage('Como estão as vendas hoje?')">
+                            📊 Vendas de hoje
+                        </button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Analise meu faturamento do mês')">
+                            💰 Faturamento mensal
+                        </button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Como melhorar meu lava rápido?')">
+                            🚗 Melhorar serviço
+                        </button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Dicas para aumentar vendas')">
+                            📈 Aumentar vendas
+                        </button>
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <div class="input-group">
+                            <input type="text" id="chatInput" placeholder="Digite sua mensagem..." onkeypress="handleChatKeyPress(event)">
+                            <button class="send-btn" onclick="sendMessage()" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-loading" id="chatLoading" style="display: none;">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span>Assistente digitando...</span>
                 </div>
             </div>
         </div>

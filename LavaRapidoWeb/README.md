@@ -1,40 +1,52 @@
-# LavaRápido - Sistema Web de Gestão
+# 🚗 LavaRápido - Sistema de Gestão de Lava-Jato
 
-Sistema completo de gestão para lava-jatos desenvolvido em HTML, CSS e JavaScript com armazenamento local (LocalStorage).
+Sistema completo de gestão para lava-jatos desenvolvido por **João Lucas** da **Like Look Solutions**.
+
+## 🆕 NOVIDADE: Chat IA Integrado!
+Agora com assistente virtual especializado em lava rápido usando a tecnologia **Google Gemini**!
 
 ## 🚀 Funcionalidades
 
-### Dashboard
-- **Estatísticas em tempo real**
-  - Faturamento do dia
-  - Número de serviços realizados hoje
-  - Total de clientes cadastrados  
-  - Faturamento do mês atual
-- **Atividades recentes** - Últimas 5 vendas realizadas
+### 📊 Dashboard
+- Faturamento diário e mensal
+- Quantidade de serviços realizados
+- Total de clientes cadastrados
+- Atividades recentes
 
-### Gestão de Clientes
-- ✅ Cadastro completo (nome, telefone, email, veículo)
-- ✅ Edição e exclusão
-- ✅ Busca por nome, telefone, email ou veículo
-- ✅ Listagem com paginação automática
+### 👥 Gestão de Clientes
+- Cadastro completo de clientes
+- Informações de contato e veículo
+- Busca e filtragem
+- Histórico de serviços
 
-### Gestão de Serviços  
-- ✅ Cadastro de serviços (nome, descrição, preço, tempo)
-- ✅ Edição e exclusão
-- ✅ Serviços padrões pré-cadastrados
-- ✅ Preços flexíveis
+### 🔧 Gestão de Serviços
+- Catálogo de serviços oferecidos
+- Preços e tempo de execução
+- Descrições detalhadas
+- Controle de ativo/inativo
 
-### Registro de Vendas
-- ✅ Associação cliente + serviço
-- ✅ Data e hora personalizáveis
-- ✅ Valor automático baseado no serviço
-- ✅ Campo para observações
-- ✅ Status de vendas (concluído, pendente, cancelado)
+### 💰 Controle de Vendas
+- Registro de vendas/serviços
+- Controle de status
+- Associação cliente-serviço
+- Histórico completo
 
-### Relatórios Gerenciais
-- 📊 **Faturamento por período** - Total, quantidade e ticket médio
-- 📊 **Serviços mais solicitados** - Ranking com faturamento
-- 📊 **Top 10 clientes frequentes** - Visitas e valor gasto
+### 📈 Relatórios Avançados
+- Faturamento por período
+- Serviços mais solicitados
+- Clientes mais frequentes
+- Exportação em Excel e PDF
+
+### 🤖 Chat IA - Assistente Virtual
+- **Especialista em lava rápido** com IA do Google Gemini
+- Análises inteligentes de dados em tempo real
+- Consultoria personalizada sobre:
+  - 💰 Análise de caixa e faturamento
+  - 📊 Interpretação de relatórios
+  - 📈 Estratégias de vendas
+  - 🚗 Dicas para melhorar o serviço
+  - 👥 Gestão de clientes
+  - ⚙️ Otimização de processos
 
 ## 💻 Como Usar
 
@@ -57,7 +69,15 @@ Não há instalação necessária! Basta abrir o arquivo `index.html` no navegad
 - **Busca de clientes**: Digite qualquer informação na barra de busca
 - **Edição rápida**: Clique em "Editar" em qualquer tabela
 - **Relatórios filtrados**: Use as datas para relatórios específicos
+- **Chat IA**: Assistente virtual para análises e consultoria
 - **Responsivo**: Funciona perfeitamente no celular
+
+### 5. Como Usar o Chat IA
+1. **Acesse a aba "Chat IA"**
+2. **Use perguntas rápidas** - Clique nos botões para consultas comuns
+3. **Digite perguntas personalizadas** - O assistente entende contexto
+4. **Receba insights detalhados** - Análises baseadas nos seus dados
+5. **Implemente sugestões** - Dicas práticas para melhorar o negócio
 
 ## 💾 Armazenamento de Dados
 
@@ -94,8 +114,19 @@ Edite a função `getDefaultServicos()` no arquivo `js/app.js` para personalizar
 
 - ✅ **Desktop**: Chrome, Firefox, Safari, Edge
 - ✅ **Mobile**: Totalmente responsivo
-- ✅ **Offline**: Funciona sem internet
+- ✅ **Offline**: Funciona sem internet (exceto Chat IA)
 - ✅ **PWA Ready**: Pode ser instalado como app
+
+## 🛠️ Tecnologias Utilizadas
+
+- **HTML5** - Estrutura semântica
+- **CSS3** - Design responsivo e moderno
+- **JavaScript ES6+** - Lógica e interatividade
+- **LocalStorage** - Persistência de dados local
+- **Google Gemini API** - Inteligência Artificial
+- **Font Awesome** - Ícones
+- **XLSX.js** - Exportação Excel
+- **jsPDF** - Exportação PDF
 
 ## 🔧 Estrutura de Arquivos
 
@@ -131,13 +162,55 @@ LavaRapidoWeb/
 ### Backup dos dados
 É recomendado fazer backup regular dos dados importantes, pois eles ficam apenas no navegador local.
 
+## 👨‍💻 Desenvolvedor
+
+**João Lucas**
+- 📱 Telefone: +55 44 8833-2218
+- 🏢 Empresa: Like Look Solutions
+- 📞 Comercial: +55 11 99294-6628
+- 🌐 Site: [likelook.wixsite.com/solutions](https://likelook.wixsite.com/solutions)
+
+### 🏢 Like Look Solutions
+**CNPJ:** 36.992.198/0001-84
+
+**Especialidades:**
+- ✅ Soluções de TI
+- ✅ Field Support
+- ✅ Alocação de Profissionais
+- ✅ Cabling
+- ✅ Rollout
+- ✅ Inventário
+
+## 🔄 Versionamento
+
+- **v1.0.0** - Versão inicial com funcionalidades básicas
+- **v1.1.0** - Adição do sistema de relatórios
+- **v1.2.0** - Implementação do Chat IA com Google Gemini
+- **v1.3.0** - Melhorias na interface e responsividade
+
+## 🚀 Próximas Funcionalidades
+
+- [ ] Integração com WhatsApp Business
+- [ ] Sistema de notificações push
+- [ ] Backup em nuvem
+- [ ] Multi-usuário
+- [ ] Dashboard em tempo real
+- [ ] Integração com sistemas de pagamento
+
 ## 📞 Suporte
 
 Este é um sistema independente. Para suporte:
 1. Verifique este README
 2. Teste em navegador atualizado
 3. Consulte logs no Console (F12)
+4. Entre em contato: +55 44 8833-2218
+
+## 📄 Licença
+
+Sistema desenvolvido exclusivamente para uso comercial.
+© 2024 Like Look Solutions - Todos os direitos reservados.
 
 ---
 
-**Desenvolvido para pequenos negócios que precisam de gestão simples e eficiente! 🚗💧**
+**Desenvolvido com ❤️ por João Lucas - Like Look Solutions**
+**Sistema completo para pequenos negócios que precisam de gestão simples e eficiente! 🚗💧**

@@ -796,6 +796,152 @@ class LavaRapidoApp {
             }
         }, 3000);
     }
+
+    // Funcionalidades do Chat IA
+    async callGeminiAPI(message) {
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+        const API_KEY = "AIzaSyCjY7CrJM_3FwTmg0xjm-HO_Jw_lmaarro";
+        
+        try {
+            const systemPrompt = this.createSystemPrompt();
+            const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `${systemPrompt}\n\nUsuário: ${message}`
+                        }]
+                    }]
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        } catch (error) {
+            console.error('Erro na API do Gemini:', error);
+            return 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente em alguns instantes.';
+        }
+    }
+
+    createSystemPrompt() {
+        const hoje = new Date().toDateString();
+        const mesAtual = new Date().getMonth();
+        const anoAtual = new Date().getFullYear();
+        
+        // Dados atuais do sistema
+        const vendasHoje = this.vendas.filter(venda => 
+            new Date(venda.data).toDateString() === hoje && 
+            venda.status !== 'cancelado'
+        );
+        
+        const vendasMes = this.vendas.filter(venda => {
+            const dataVenda = new Date(venda.data);
+            return dataVenda.getMonth() === mesAtual && 
+                   dataVenda.getFullYear() === anoAtual && 
+                   venda.status !== 'cancelado';
+        });
+        
+        const faturamentoHoje = vendasHoje.reduce((total, venda) => total + venda.valor, 0);
+        const faturamentoMes = vendasMes.reduce((total, venda) => total + venda.valor, 0);
+        const ticketMedio = vendasMes.length ? faturamentoMes / vendasMes.length : 0;
+        
+        return `Você é um assistente virtual especializado em lava rápido e gestão de negócios automotivos. 
+Você trabalha especificamente para o sistema LavaRápido desenvolvido por João Lucas.
+
+DADOS ATUAIS DO NEGÓCIO:
+- Total de clientes cadastrados: ${this.clientes.length}
+- Serviços oferecidos: ${this.servicos.length}
+- Vendas hoje: ${vendasHoje.length}
+- Faturamento hoje: R$ ${faturamentoHoje.toFixed(2)}
+- Vendas no mês: ${vendasMes.length}
+- Faturamento mensal: R$ ${faturamentoMes.toFixed(2)}
+- Ticket médio mensal: R$ ${ticketMedio.toFixed(2)}
+
+SERVIÇOS DISPONÍVEIS:
+${this.servicos.map(s => `- ${s.nome}: R$ ${s.preco.toFixed(2)} (${s.tempo || 'N/A'} min)`).join('\n')}
+
+Sua personalidade:
+- Profissional e conhecedor do setor de lava rápido
+- Analítico e orientado por dados
+- Prestativo e proativo em sugestões
+- Usa emojis adequados ao contexto
+- Foca em soluções práticas
+
+Responda sempre em português brasileiro, seja direto e útil. 
+Quando analise dados, seja específico e traga insights valiosos.
+Sempre que possível, sugira ações práticas para melhorar o negócio.`;
+    }
+
+    addChatMessage(message, isBot = false, isLoading = false) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        
+        messageDiv.className = `message ${isBot ? 'bot-message' : 'user-message'}`;
+        
+        const currentTime = new Date().toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="fas ${isBot ? 'fa-robot' : 'fa-user'}"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-text">${isLoading ? 'Digitando...' : message}</div>
+                <div class="message-time">${currentTime}</div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        return messageDiv;
+    }
+
+    async sendChatMessage(message) {
+        if (!message.trim()) return;
+        
+        // Adicionar mensagem do usuário
+        this.addChatMessage(message, false);
+        
+        // Mostrar indicador de carregamento
+        const loadingElement = document.getElementById('chatLoading');
+        loadingElement.style.display = 'flex';
+        
+        // Desabilitar input
+        const inputElement = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        inputElement.disabled = true;
+        sendButton.disabled = true;
+        
+        try {
+            // Chamar API do Gemini
+            const response = await this.callGeminiAPI(message);
+            
+            // Ocultar loading
+            loadingElement.style.display = 'none';
+            
+            // Adicionar resposta do bot
+            this.addChatMessage(response, true);
+            
+        } catch (error) {
+            loadingElement.style.display = 'none';
+            this.addChatMessage('Desculpe, ocorreu um erro. Tente novamente.', true);
+        } finally {
+            // Reabilitar input
+            inputElement.disabled = false;
+            sendButton.disabled = false;
+            inputElement.focus();
+        }
+    }
 }
 
 // Funções globais para serem chamadas pelo HTML
@@ -1096,6 +1242,27 @@ function exportarClientesPDF() {
     doc.text('Desenvolvido por João Lucas - Like Look Solutions', 105, 285, null, null, 'center');
     
     doc.save(`Relatorio_Clientes_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+// Funções globais do Chat
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (message) {
+        app.sendChatMessage(message);
+        input.value = '';
+    }
+}
+
+function sendQuickMessage(message) {
+    app.sendChatMessage(message);
+}
+
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
 }
 
 // Fechar modal quando clicar fora dele
