@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LavaRápido - Sistema de Gestão</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-car"></i> LavaRápido</h1>
+            <p class="subtitle">Sistema de Gestão de Lava-Jato</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="showTab('dashboard')">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </button>
+            <button class="tab-btn" onclick="showTab('clientes')">
+                <i class="fas fa-users"></i> Clientes
+            </button>
+            <button class="tab-btn" onclick="showTab('servicos')">
+                <i class="fas fa-wrench"></i> Serviços
+            </button>
+            <button class="tab-btn" onclick="showTab('vendas')">
+                <i class="fas fa-cash-register"></i> Vendas
+            </button>
+            <button class="tab-btn" onclick="showTab('relatorios')">
+                <i class="fas fa-file-alt"></i> Relatórios
+            </button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Faturamento Hoje</h3>
+                        <p class="stat-value" id="faturamentoHoje">R$ 0,00</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-car-wash"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Serviços Hoje</h3>
+                        <p class="stat-value" id="servicosHoje">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Clientes</h3>
+                        <p class="stat-value" id="totalClientes">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-month"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Faturamento Mês</h3>
+                        <p class="stat-value" id="faturamentoMes">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-activities">
+                <h3>Atividades Recentes</h3>
+                <div id="atividadesRecentes" class="activities-list">
+                    <p class="no-data">Nenhuma atividade registrada</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clientes Tab -->
+        <div id="clientes" class="tab-content">
+            <div class="section-header">
+                <h2>Gestão de Clientes</h2>
+                <button class="btn btn-primary" onclick="showClienteForm()">
+                    <i class="fas fa-plus"></i> Novo Cliente
+                </button>
+            </div>
+
+            <div class="search-section">
+                <input type="text" id="searchCliente" placeholder="Buscar cliente..." onkeyup="searchClientes()">
+            </div>
+
+            <div class="table-container">
+                <table id="clientesTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Email</th>
+                            <th>Veículo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientesTableBody">
+                        <tr class="no-data">
+                            <td colspan="5">Nenhum cliente cadastrado</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Serviços Tab -->
+        <div id="servicos" class="tab-content">
+            <div class="section-header">
+                <h2>Gestão de Serviços</h2>
+                <button class="btn btn-primary" onclick="showServicoForm()">
+                    <i class="fas fa-plus"></i> Novo Serviço
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table id="servicosTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Preço</th>
+                            <th>Tempo (min)</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="servicosTableBody">
+                        <tr class="no-data">
+                            <td colspan="5">Nenhum serviço cadastrado</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vendas Tab -->
+        <div id="vendas" class="tab-content">
+            <div class="section-header">
+                <h2>Registro de Vendas</h2>
+                <button class="btn btn-primary" onclick="showVendaForm()">
+                    <i class="fas fa-plus"></i> Nova Venda
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table id="vendasTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendasTableBody">
+                        <tr class="no-data">
+                            <td colspan="6">Nenhuma venda registrada</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Relatórios Tab -->
+        <div id="relatorios" class="tab-content">
+            <div class="section-header">
+                <h2>Relatórios</h2>
+            </div>
+
+            <div class="reports-grid">
+                <div class="report-card">
+                    <h3>Faturamento por Período</h3>
+                    <div class="date-inputs">
+                        <input type="date" id="dataInicio" class="form-input">
+                        <input type="date" id="dataFim" class="form-input">
+                        <button class="btn btn-secondary" onclick="gerarRelatorioFaturamento()">Gerar</button>
+                    </div>
+                    <div id="relatorioFaturamento" class="report-result"></div>
+                </div>
+
+                <div class="report-card">
+                    <h3>Serviços Mais Solicitados</h3>
+                    <button class="btn btn-secondary" onclick="gerarRelatorioServicos()">Gerar Relatório</button>
+                    <div id="relatorioServicos" class="report-result"></div>
+                </div>
+
+                <div class="report-card">
+                    <h3>Clientes Frequentes</h3>
+                    <button class="btn btn-secondary" onclick="gerarRelatorioClientes()">Gerar Relatório</button>
+                    <div id="relatorioClientes" class="report-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modais -->
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('clienteModal')">&times;</span>
+            <h2 id="clienteModalTitle">Novo Cliente</h2>
+            <form id="clienteForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clienteNome">Nome:</label>
+                        <input type="text" id="clienteNome" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="clienteTelefone">Telefone:</label>
+                        <input type="tel" id="clienteTelefone" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clienteEmail">Email:</label>
+                        <input type="email" id="clienteEmail" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="clienteVeiculo">Veículo:</label>
+                        <input type="text" id="clienteVeiculo" class="form-input" placeholder="Ex: Honda Civic 2020">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('clienteModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="servicoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('servicoModal')">&times;</span>
+            <h2 id="servicoModalTitle">Novo Serviço</h2>
+            <form id="servicoForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="servicoNome">Nome:</label>
+                        <input type="text" id="servicoNome" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="servicoPreco">Preço (R$):</label>
+                        <input type="number" id="servicoPreco" class="form-input" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="servicoDescricao">Descrição:</label>
+                        <input type="text" id="servicoDescricao" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="servicoTempo">Tempo (minutos):</label>
+                        <input type="number" id="servicoTempo" class="form-input" min="1">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('servicoModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="vendaModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('vendaModal')">&times;</span>
+            <h2 id="vendaModalTitle">Nova Venda</h2>
+            <form id="vendaForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vendaCliente">Cliente:</label>
+                        <select id="vendaCliente" class="form-input" required>
+                            <option value="">Selecione um cliente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="vendaServico">Serviço:</label>
+                        <select id="vendaServico" class="form-input" required>
+                            <option value="">Selecione um serviço</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vendaData">Data:</label>
+                        <input type="datetime-local" id="vendaData" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vendaValor">Valor (R$):</label>
+                        <input type="number" id="vendaValor" class="form-input" step="0.01" min="0" readonly>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vendaObservacoes">Observações:</label>
+                        <textarea id="vendaObservacoes" class="form-input" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('vendaModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
